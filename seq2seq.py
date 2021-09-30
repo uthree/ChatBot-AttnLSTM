@@ -22,7 +22,7 @@ class EncoderLayer(nn.Module):
         self.ffn = FeedForwardNetwork(d_model*2, d_ff, d_model)
         self.dropout = nn.Dropout(dropout)
         self.layernorm = nn.LayerNorm(d_model)
-        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout)
+        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
         self.reverse = reverse
     def forward(self, src):
         if self.reverse:
@@ -64,7 +64,7 @@ class DecoderLayer(nn.Module):
         self.lstm = nn.LSTM(d_model, d_model, bidirectional=False, batch_first=True)
         self.ffn = FeedForwardNetwork(d_model*2, d_ff, d_model)
         self.dropout = nn.Dropout(dropout)
-        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout)
+        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
         self.layernorm = nn.LayerNorm(d_model)
     def forward(self, tgt, memory, state):
         tgt_out, state = self.lstm(tgt, state)
@@ -105,8 +105,7 @@ class Seq2Seq(nn.Module):
     def forward(self, src, tgt):
         src = self.embedding(src)
         tgt = self.embedding(tgt)
-        src, enc_state = self.encoder(src)
-        tgt, _ = self.decoder(tgt, src, enc_state)
+        mem, enc_state = self.encoder(src)
+        tgt, _ = self.decoder(tgt, mem, enc_state)
         tgt = self.hid2vocab(tgt)
         return tgt
-
