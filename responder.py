@@ -18,7 +18,7 @@ class Responder:
     def train(self, dataset, num_epoch=1, batch_size=1, device=torch.device('cpu')):
         self.s2s.train()
         self.s2s.to(device)
-        optimizer = optim.Adam(self.s2s.parameters(), lr=0.001)
+        optimizer = optim.Adam(self.s2s.parameters(), lr=0.0001)
         criterion = nn.CrossEntropyLoss(ignore_index=self.paddng_idx)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         bar = tqdm(total=len(dataset) * num_epoch)
@@ -44,15 +44,29 @@ class Responder:
         memory, state = self.s2s.encoder(self.s2s.embedding(src))
         for i in range(max_output_len):
             output, state = self.s2s.decoder(self.s2s.embedding(tgt[:, -1:]), memory, state)
-            output_argmax = output.argmax(dim=-1)
+            output_argmax = self.s2s.hid2vocab(output).argmax(dim=-1)
+            #print(output_argmax)
             tgt = torch.cat((tgt, output_argmax), dim=1)
         return tgt
+
+    def padding_after_eos(self, ids, eos_idx=2, padding_idx=3):
+        eos = False
+        res = []
+        for id in ids:
+            if id == eos_idx:
+                eos = True
+            if eos:
+                res.append(padding_idx)
+            else:
+                res.append(id)
+        return res
 
     def predict_sentences(self, sentences, device=torch.device('cpu'), max_output_len = 64):
         src = [self.spm.EncodeAsIds(sentence) for sentence in sentences]
         src = torch.tensor(src).long()
         tgt = self.predict_tensor(src, device, max_output_len)
-        return [self.spm.DecodeIdsWithCheck(tgt[i].tolist()) for i in range(len(sentences))]
+        tgt = [self.padding_after_eos(ids) for ids in tgt.tolist()]
+        return [self.spm.DecodeIdsWithCheck(tgt[i]) for i in range(len(sentences))]
 
     @classmethod
     def load(cls, model_path, spm_path):

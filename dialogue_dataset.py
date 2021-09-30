@@ -7,7 +7,7 @@ import sentencepiece as spm
 
 class DialogueDataset(torch.utils.data.Dataset):
     """Some Information about DialogueDataset"""
-    def __init__(self, data_file_pathes, sentencepiece_model_path, max_len=64, padding_idx=3):
+    def __init__(self, data_file_pathes, sentencepiece_model_path, max_len=32, padding_idx=3):
         super(DialogueDataset, self).__init__()
         # load tokenizer
         self.sp = spm.SentencePieceProcessor()
