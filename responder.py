@@ -33,6 +33,8 @@ class Responder:
                 optimizer.step()
                 bar.set_description(f'Epoch: {epoch}/{num_epoch}, Loss: {loss.item():.4f}')
                 bar.update(batch_size)
+                if i % 3000 == 0:
+                    torch.save(self.s2s, './seq2seq.pt')
             torch.save(self.s2s, './seq2seq.pt')
         bar.close()
 

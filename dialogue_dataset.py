@@ -7,12 +7,13 @@ import sentencepiece as spm
 
 class DialogueDataset(torch.utils.data.Dataset):
     """Some Information about DialogueDataset"""
-    def __init__(self, data_file_pathes, sentencepiece_model_path, max_len=32, padding_idx=3):
+    def __init__(self, data_file_pathes, sentencepiece_model_path, max_len=32, padding_idx=3, join_past_logs=1):
         super(DialogueDataset, self).__init__()
         # load tokenizer
         self.sp = spm.SentencePieceProcessor()
         self.sp.Load(sentencepiece_model_path)
         self.sp.SetEncodeExtraOptions("bos:eos")
+        self.join_past_logs = join_past_logs
 
         # load data
         law_data = []
@@ -35,7 +36,7 @@ class DialogueDataset(torch.utils.data.Dataset):
         self.data = torch.LongTensor(self.data)
 
     def __getitem__(self, index):
-        return self.data[index], self.data[index + 1]
+        return torch.flatten(self.data[index:index+self.join_past_logs], start_dim=-2), self.data[index + self.join_past_logs]
 
     def __len__(self):
-        return len(self.data) - 1
+        return len(self.data) - self.join_past_logs
