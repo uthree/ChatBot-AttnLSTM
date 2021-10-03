@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from seq2seq import Seq2Seq
 
+
 class Responder:
     def __init__(self, sentencepiece_model_path='./sentencepiece.model', padding_idx=3, **kwargs):
         self.s2s = Seq2Seq(**kwargs)

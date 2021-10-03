@@ -13,7 +13,7 @@ logs = []
 while True:
     user_utterance = input('USER > ')
     logs.append(user_utterance)
-    bot_responce = responder.predict_sentences(['<sep>'.join(logs[-join_past_logs:])], noise_gain=0.3)[0]
+    bot_responce = responder.predict_sentences(['<sep>'.join(logs[-join_past_logs:])], noise_gain=0)[0]
     bot_responce = bot_responce.replace('<sep>', '\n')
     for resp in bot_responce.split('\n'):
         print('BOT > ' + resp)
