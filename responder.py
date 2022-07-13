@@ -19,7 +19,7 @@ class Responder:
     def train(self, dataset, num_epoch=1, batch_size=1, device=torch.device('cpu')):
         self.s2s.train()
         self.s2s.to(device)
-        optimizer = optim.Adam(self.s2s.parameters(), lr=5e-5)
+        optimizer = optim.RAdam(self.s2s.parameters(), lr=1e-4)
         criterion = nn.CrossEntropyLoss(ignore_index=self.paddng_idx)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         bar = tqdm(total=len(dataset) * num_epoch)
@@ -34,7 +34,7 @@ class Responder:
                 optimizer.step()
                 bar.set_description(f'Epoch: {epoch}/{num_epoch}, Loss: {loss.item():.4f}, Iter: {i}')
                 bar.update(batch_size)
-                if i % 3000 == 0:
+                if i % 1000 == 0:
                     torch.save(self.s2s, './seq2seq.pt')
                     tqdm.write(f'Saved model at epoch {epoch}, iter={i}')
             torch.save(self.s2s, './seq2seq.pt')
@@ -45,10 +45,13 @@ class Responder:
         self.s2s.to(device)
         src = src.to(device)
         tgt = torch.ones(src.shape[0], 1).long().to(device)
-        memory, state = self.s2s.encoder(self.s2s.embedding(src))
-        state = [(h + noise_gain * torch.randn_like(h), c + noise_gain * torch.randn_like(c)) for h, c in state]
+        memory = self.s2s.encoder(self.s2s.embedding(src))
+        state = None
         for i in range(max_output_len):
-            output, state = self.s2s.decoder(self.s2s.embedding(tgt[:, -1:]), memory, state)
+            if state == None:
+                output, state = self.s2s.decoder(self.s2s.embedding(tgt[:, -1:]), memory, [None]*self.s2s.num_decoder_layers)
+            else:
+                output, state = self.s2s.decoder(self.s2s.embedding(tgt[:, -1:]), memory, state)
             output_argmax = self.s2s.hid2vocab(output).argmax(dim=-1)
             #print(output_argmax)
             tgt = torch.cat((tgt, output_argmax), dim=1)

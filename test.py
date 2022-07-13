@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 responder = Responder.load('seq2seq.pt', './sentencepiece.model')
-join_past_logs = 1
+join_past_logs = 5
 logs = []
 while True:
     user_utterance = input('USER > ')
